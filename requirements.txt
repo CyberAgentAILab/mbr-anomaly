@@ -1,0 +1,11 @@
+-e ./fairseq
+sacremoses==0.1.1
+scikit-learn==1.4.1.post1
+sentencepiece==0.1.99
+torch==2.2.1 # modify this to match your environment
+unbabel-comet==2.2.2
+beautifulsoup4
+joblib
+jupyter
+matplotlib
+wheel # might be needed for later fastBPE installations
