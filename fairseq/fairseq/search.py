@@ -699,11 +699,13 @@ class DiverseBeamSearch(Search):
 class Sampling(Search):
     sampling_topk: int
     sampling_topp: float
+    sampling_epsilon: float
 
-    def __init__(self, tgt_dict, sampling_topk=-1, sampling_topp=-1.0):
+    def __init__(self, tgt_dict, sampling_topk=-1, sampling_topp=-1.0, sampling_epsilon=-1.0):
         super().__init__(tgt_dict)
         self.sampling_topk = sampling_topk
         self.sampling_topp = sampling_topp
+        self.sampling_epsilon = sampling_epsilon
 
     def _sample_topp(self, lprobs):
         """Sample among the smallest set of elements whose cumulative probability mass exceeds p.
@@ -750,6 +752,39 @@ class Sampling(Search):
         trimed_probs = truncated_probs.masked_fill_(trim_mask, 0)
         return trimed_probs, truncated_indices
 
+    def _epsilon_sample(self, lprobs):
+        """Sample from the set of words with probability > epsilon.
+        
+        Reference: "Truncation Sampling as Language Model Desmoothing"
+        (Keskar et al., 2020) https://arxiv.org/abs/2002.03284
+        
+        Args:
+            lprobs: (bsz x input_beam_size x vocab_size)
+                the model's log-probabilities over the vocabulary at the current step
+            
+        Return: A tuple of (trimed_probs, truncated_indices) where:
+            trimed_probs: (bsz x input_beam_size x vocab_size)
+                the model's probabilities over the elements selected to sample from. The
+                width of the third dimension is determined by epsilon.
+            truncated_indices: (bsz x input_beam_size x vocab_size)
+                the indices of the chosen elements.
+        """
+
+        probs = lprobs.exp()
+        indices_to_remove = probs.le(self.sampling_epsilon) # Mask of low probability indices
+
+        # Do not remove top probability token
+        indices_top = probs.argmax(dim=-1, keepdim=True)
+        indices_to_remove.scatter_(dim=-1, index=indices_top, value=False)
+
+        # Mask out low probability indices
+        trimed_probs = probs.masked_fill(indices_to_remove, 0)
+
+        # Just make original indices to be 0, 1, 2, ..., size = (bsz x input_beam_size x vocab_size)
+        truncated_indices = torch.arange(0, probs.size(-1), device=probs.device).expand_as(probs)
+
+        return trimed_probs, truncated_indices
+
     @torch.jit.export
     def step(
         self,
@@ -773,6 +808,9 @@ class Sampling(Search):
             # only sample from top-k candidates
             lprobs, top_indices = lprobs.topk(self.sampling_topk)
             probs = lprobs.exp_()
+        elif self.sampling_epsilon > 0:
+            # only sample from tokens with probability > epsilon
+            probs, top_indices = self._epsilon_sample(lprobs)
         else:
             probs = lprobs.exp_()
 

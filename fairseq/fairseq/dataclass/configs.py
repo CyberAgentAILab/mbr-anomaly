@@ -921,6 +921,12 @@ class GenerationConfig(FairseqDataclass):
             "help": "sample from the smallest set whose cumulative probability mass exceeds p for next words"
         },
     )
+    sampling_epsilon: float = field(
+        default=-1.0,
+        metadata={
+            "help": "sample from tokens with probability higher than epsilon"
+        },
+    )
     constraints: Optional[GENERATION_CONSTRAINTS_CHOICES] = field(
         default=None,
         metadata={

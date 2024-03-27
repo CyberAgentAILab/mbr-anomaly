@@ -420,6 +420,7 @@ class FairseqTask(object):
         sampling = getattr(args, "sampling", False)
         sampling_topk = getattr(args, "sampling_topk", -1)
         sampling_topp = getattr(args, "sampling_topp", -1.0)
+        sampling_epsilon = getattr(args, "sampling_epsilon", -1.0)
         diverse_beam_groups = getattr(args, "diverse_beam_groups", -1)
         diverse_beam_strength = getattr(args, "diverse_beam_strength", 0.5)
         match_source_len = getattr(args, "match_source_len", False)
@@ -442,10 +443,11 @@ class FairseqTask(object):
             raise ValueError("Provided Search parameters are mutually exclusive.")
         assert sampling_topk < 0 or sampling, "--sampling-topk requires --sampling"
         assert sampling_topp < 0 or sampling, "--sampling-topp requires --sampling"
+        assert sampling_epsilon < 0 or sampling, "--sampling-epsilon requires --sampling"
 
         if sampling:
             search_strategy = search.Sampling(
-                self.target_dictionary, sampling_topk, sampling_topp
+                self.target_dictionary, sampling_topk, sampling_topp, sampling_epsilon
             )
         elif diverse_beam_groups > 0:
             search_strategy = search.DiverseBeamSearch(
