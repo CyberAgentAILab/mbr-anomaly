@@ -2,7 +2,7 @@
 
 This repository contains the code to reproduce the analysis results presented in our NAACL 2024 paper:
 
-On the True Distribution Approximation of Minimum Bayes-Risk Decoding [[Paper]()]
+On the True Distribution Approximation of Minimum Bayes-Risk Decoding [[Paper](https://arxiv.org/abs/2404.00752)]
 
 ## Requirements
 - Python 3.9+
@@ -276,4 +276,10 @@ The calculated LOF object is saved under the `--mbrd_prefix` directory as `c100p
 
 ## Citation
 ```bibtex
+@article{ohashi2024true,
+    title={On the True Distribution Approximation of Minimum Bayes-Risk Decoding},
+    author={Ohashi, Atsumoto and Honda, Ukyo and Morimura, Tetsuro and Jinnai, Yuu},
+    journal={arXiv preprint arXiv:2404.00752},
+    year={2024},
+}
 ```
